@@ -37,6 +37,14 @@
   cursor: pointer;
 }
 
+.scrolled {
+  width: 100%;
+  background-color: #cfcfcf;
+  position: fixed;
+  top: 0;
+  z-index: 99;
+}
+
 .button-tag {
   width: 120px;
   height: 36px;
@@ -80,6 +88,7 @@
   font-size: 12px;
   text-align: center;
   border: 1px solid rgba(238, 78, 91, 1);
+  cursor: pointer;
 }
 .card-img {
   width: 100%;

@@ -12,6 +12,14 @@
 .text-center {
   text-align: center;
 }
+.inline-block {
+  display: inline-block;
+}
+.text-err {
+  color: red;
+  font-size: 12px;
+  font-weight: 400;
+}
 .float-left {
   float: left;
 }
@@ -72,6 +80,10 @@
 
 .mb-10 {
   margin-bottom: 10px;
+}
+
+.mr-10 {
+  margin-right: 10px;
 }
 .container {
   padding-right: 15px;

@@ -1,0 +1,211 @@
+@-webkit-keyframes fade-In {
+  from {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-In {
+  from {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fadeIn {
+  -webkit-animation: fade-In 0.4s linear 0s 1 forwards;
+  animation: fade-In 0.4s linear 0s 1 forwards;
+}
+
+@-webkit-keyframes fade-Out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  99% {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+@keyframes fade-Out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  99% {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+.fadeOut {
+  -webkit-animation: fade-Out 0.3s linear 0s 1 forwards;
+  animation: fade-Out 0.3s linear 0s 1 forwards;
+}
+
+/* 设置初始状态 */
+.modal-box {
+  position: fixed;
+  overflow: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.mask {
+  position: fixed;
+  overflow: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2000;
+  overflow-scrolling: touch;
+  outline: 0;
+  background: rgba(55, 55, 55, 0.6);
+}
+
+/* 如果不加 会被mask的透明度影响 */
+.modal-wrap {
+  position: fixed;
+  overflow: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2000;
+}
+
+.modal {
+  position: relative;
+  top: 250px;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #fff;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.modal-header {
+  padding: 15px;
+  text-align: center;
+}
+
+.modal-title {
+  line-height: 36px;
+  height: 36px;
+  color: rgba(238, 78, 91, 1);
+  font-size: 24px;
+  text-align: center;
+}
+
+/* .modal-title {
+  height: 20px;
+  line-height: 20px;
+  font-size: 14px;
+  color: #1c2438;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+} */
+
+.modal-body {
+  padding: 16px;
+}
+.modal-footer {
+  border-top: 1px solid #e9eaec;
+  padding: 16px;
+  text-align: right;
+}
+
+.btn {
+  display: inline-block;
+  margin-bottom: 0;
+  font-weight: 400;
+  text-align: center;
+
+  touch-action: manipulation;
+  cursor: pointer;
+  background-image: none;
+  border: 1px solid transparent;
+  white-space: nowrap;
+
+  user-select: none;
+  padding: 5px 15px 6px;
+  font-size: 12px;
+  border-radius: 4px;
+  transition: color 0.2s linear, background-color 0.2s linear, border 0.2s linear, box-shadow 0.2s linear;
+  background-color: #fff;
+  border-color: #dcdee2;
+}
+.btn:focus {
+  outline: 0;
+}
+
+.btn:hover {
+  border-color: #2d8cf0;
+  color: #2d8cf0;
+}
+
+.primary {
+  color: #fff;
+  background-color: #2d8cf0;
+  border-color: #2d8cf0;
+}
+
+.primary:hover {
+  background-color: #57a3f3;
+  border-color: #57a3f3;
+  color: #fff;
+}
+
+.input {
+  width: 240px;
+  height: 40px;
+  line-height: 20px;
+  border: 0;
+  border-radius: 400px;
+  background-color: rgba(242, 242, 242, 1);
+  padding-left: 20px;
+  text-align: left;
+  outline: 0;
+  margin-bottom: 20px;
+}
+
+.button-red {
+  width: 100%;
+  max-width: 240px;
+  height: 40px;
+  line-height: 40px;
+  border-radius: 100px;
+  background-color: #ee4e5b;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  display: inline-block;
+}
