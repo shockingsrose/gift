@@ -1,10 +1,16 @@
 import React, { Component } from 'react';
 import Modal from './component/Modal';
+import Register from './component/register';
+import TransferModal from './component/transfer';
+import Cart from './component/cart';
+import Login from './component/login';
 import Paginate from 'react-paginate';
 import './App.css';
 import './grid.css';
 import src1 from './img1.png';
 import left from './向左.png';
+import userSrc from './component/cart/userCenter.png';
+import arrowRight from './component/cart/arrow-right.png';
 
 class App extends Component {
   constructor() {
@@ -48,7 +54,18 @@ class App extends Component {
       modal_register: {
         show: false
       },
-      loginStatus: false
+      // 转账
+      modal_transfer: {
+        show: true,
+        code: '',
+        data: {}
+      },
+      loginStatus: false,
+      loginError: '',
+      userInfo: {
+        account: ''
+      },
+      cartShow: false
     };
   }
 
@@ -79,7 +96,6 @@ class App extends Component {
   };
 
   showModal = (modalName, data = {}) => {
-    console.log(modalName);
     let modalData = this.state[modalName];
     modalData = Object.assign(modalData, data, { show: true });
     this.setState({ [modalName]: modalData });
@@ -90,9 +106,60 @@ class App extends Component {
     modalData = Object.assign(modalData, data, { show: false });
     this.setState({ [modalName]: modalData });
   };
+
+  login = (account, password) => {
+    // 调用接口
+    Promise.resolve('')
+      .then(() => {
+        this.closeModal('modal_login');
+        this.closeModal('modal_register');
+        this.toggleLoginStatus(true);
+        this.refs.login.clear();
+        const userInfo = Object.assign(this.state.userInfo, { account });
+        this.setState({ userInfo });
+      })
+      .catch(() => {
+        this.setState({ loginError: '账号或密码错误' });
+      });
+  };
+
+  register = (account, password) => {
+    // 调用接口
+    Promise.resolve('')
+      .then(() => {
+        this.refs.register.clear();
+        this.closeModal('modal_register');
+        this.showModal('modal_login');
+      })
+      .catch(() => {});
+  };
+
+  loginOut = () => {
+    Promise.resolve('').then(() => {
+      this.setState({ loginStatus: false, userInfo: {} });
+    });
+  };
+
+  toggleLoginStatus = (status) => {
+    this.setState({ loginStatus: status });
+  };
+
+  toLogin = () => {
+    this.closeModal('modal_register');
+    this.showModal('modal_login');
+  };
+  toRegister = () => {
+    this.closeModal('modal_login');
+    this.showModal('modal_register');
+  };
+
+  toggleCartShow = (show) => {
+    this.setState({ cartShow: show });
+  };
   render() {
-    const { scrolled, marginBottom } = this.state;
-    const { modal_login, modal_register } = this.state;
+    const { scrolled, marginBottom, loginStatus, loginError } = this.state;
+    const { modal_login, modal_register, cartShow, modal_transfer } = this.state;
+    const { toggleCartShow } = this;
     return (
       <div className="App">
         <header className="App-header" style={{ marginBottom }}>
@@ -103,35 +170,38 @@ class App extends Component {
               </div>
               <div className="col-sm-6">
                 <div className="text-right">
-                  <p className="App-login-text">
-                    <span>
-                      您好，请
-                      <span
-                        className="button-login"
-                        onClick={() => {
-                          this.showModal('modal_login');
-                        }}
-                      >
-                        登录{' '}
-                      </span>
-                    </span>
-                    |
-                    <span
-                      className="pointer"
-                      onClick={() => {
-                        this.showModal('modal_register');
-                      }}
-                    >
-                      {' '}
-                      免费注册
-                    </span>
-                  </p>
+                  <div className="App-login-text">
+                    <LoginStatus loginStatus={loginStatus} showModal={this.showModal} userInfo={this.state.userInfo} loginOut={this.loginOut} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </header>
 
+        {/* cart */}
+        <div
+          className="App-cart pointer"
+          onClick={() => {
+            toggleCartShow(true);
+          }}
+        >
+          <div className="ptb-10">
+            <img src={arrowRight} alt="" style={{ transform: 'rotate(180deg)' }} />
+          </div>
+          <div className="ptb-10">
+            <img src={userSrc} alt="" />
+          </div>
+        </div>
+        <Cart
+          show={cartShow}
+          showModal={() => {
+            this.showModal('modal_transfer');
+          }}
+          handleClose={() => {
+            this.toggleCartShow(false);
+          }}
+        />
         {/* 标签 */}
         <div className={`${scrolled ? 'scrolled' : ''}`} id="tagDiv">
           <div className="space-20" />
@@ -190,89 +260,89 @@ class App extends Component {
           />
         </div>
         <div className="space-30" />
-        <Modal show={modal_login.show} title="账号登录" footer={false}>
+        <Modal
+          show={modal_login.show}
+          title="账号登录"
+          footer={false}
+          onCancel={() => {
+            this.closeModal('modal_login');
+          }}
+        >
           <Login
-            closeModal={() => {
+            ref="login"
+            onCancel={() => {
               this.closeModal('modal_login');
+            }}
+            toRegister={this.toRegister}
+            login={(account, password) => {
+              this.login(account, password);
+            }}
+            loginError={loginError}
+          />
+        </Modal>
+        <Modal
+          show={modal_register.show}
+          title="账号注册"
+          onCancel={() => {
+            this.closeModal('modal_register');
+          }}
+        >
+          <Register
+            ref="register"
+            onCancel={() => {
+              this.closeModal('modal_register');
+            }}
+            toLogin={this.toLogin}
+            register={(account, password) => {
+              this.register(account, password);
             }}
           />
         </Modal>
-        {/* <Modal show={modal_register.show} title="账号注册" /> */}
+        <TransferModal
+          show={modal_transfer.show}
+          handleClose={() => {
+            this.closeModal('modal_transfer');
+          }}
+        />
       </div>
     );
   }
 }
 
-class Register extends Component {
-  constructor() {
-    super();
-    this.state = {
-      account: ''
-    };
-  }
-}
-class Login extends Component {
-  constructor() {
-    super();
-    this.state = {
-      account: '',
-      password: '',
-      error: ''
-    };
-  }
-
-  handleInputChange = (key, value) => {
-    this.setState({ [key]: value });
-  };
-
-  login = () => {
-    if (this.state.account === '' || this.state.password === '') {
-      this.setState({ error: `${this.state.account === '' ? '请输入账号' : '请输入密码'}` });
-      return;
-    }
-    console.log(`账号${this.state.account}`);
-    console.log(`密码${this.state.password}`);
-    this.props.closeModal();
-    this.clear();
-  };
-
-  clear = () => {
-    this.setState({ account: '', password: '', error: '' });
-  };
+class LoginStatus extends Component {
   render() {
-    const { account, password, error } = this.state;
-    return (
+    const { userInfo, loginStatus } = this.props;
+    const { showModal } = this.props;
+    return loginStatus ? (
       <div>
-        <input
-          className="input"
-          value={account}
-          placeholder="请输入手机号/邮箱"
-          onChange={(e) => {
-            this.handleInputChange('account', e.target.value);
+        <span className="color-userName">欢迎您！{userInfo.account}</span> | <span className="pointer">个人中心</span> |{' '}
+        <span className="pointer" onClick={this.props.loginOut}>
+          退出
+        </span>
+      </div>
+    ) : (
+      <div>
+        <span>
+          您好，请
+          <span
+            className="button-login"
+            onClick={() => {
+              showModal('modal_login');
+            }}
+          >
+            登录{' '}
+          </span>
+        </span>
+        |
+        <span
+          className="pointer"
+          onClick={() => {
+            showModal('modal_register');
           }}
-        />
-        <input
-          className="input"
-          value={password}
-          placeholder="请输入密码"
-          type="password"
-          onChange={(e) => {
-            this.handleInputChange('password', e.target.value);
-          }}
-        />
-        {error !== '' ? (
-          <p style={{ width: '240px' }} className="text-err text-left inline-block mb-10">
-            {error}
-          </p>
-        ) : null}
-
-        <div className="button-red" onClick={this.login}>
-          登录
-        </div>
-        <div className="space-20" />
-        <p>
-          没有账号？<span className="button-login">免费注册</span>
-        </p>
+        >
+          {' '}
+          免费注册{' '}
+        </span>
       </div>
     );
   }

@@ -3,6 +3,10 @@
   padding: 0;
   box-sizing: border-box;
 }
+
+body {
+  overflow-x: hidden !important;
+}
 .text-left {
   text-align: left;
 }
@@ -19,6 +23,9 @@
   color: red;
   font-size: 12px;
   font-weight: 400;
+}
+.color-999 {
+  color: #999;
 }
 .float-left {
   float: left;
@@ -69,8 +76,20 @@
   font-size: 14px;
 }
 
+.width-100 {
+  width: 100%;
+}
 .pl-15 {
   padding-left: 15px;
+}
+.ptb-10 {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.plr-15 {
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
 .plr-20 {
@@ -82,9 +101,28 @@
   margin-bottom: 10px;
 }
 
+.mb-20 {
+  margin-bottom: 10px;
+}
+.ml-10 {
+  margin-left: 10px;
+}
 .mr-10 {
   margin-right: 10px;
 }
+.mr-20 {
+  margin-right: 20px;
+}
+.p-ellips {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+.middle {
+  vertical-align: middle;
+}
+
 .container {
   padding-right: 15px;
   padding-left: 15px;
