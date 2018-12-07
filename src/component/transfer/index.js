@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Modal from '../Modal';
-import productPic from '../cart/product.jpeg';
+import qrcode from './qrcode.png';
 import './style.css';
 
 class TransferModal extends Component {
@@ -33,30 +33,35 @@ class TransferModal extends Component {
   };
 
   render() {
-    const { show, handleClose } = this.props;
+    const { show, handleClose, data } = this.props;
     const { code, error } = this.state;
     const { inputChange, submit } = this;
+    const { id, goodName, goodMainImg, getCondition } = data;
     return (
       <Modal title="转账" show={show} onCancel={handleClose}>
         <div className="transfer-content">
           <div className="text-left">
             <div className="float-left mr-10">
-              <img src={productPic} alt="" width="60" />
+              <img src={goodMainImg} alt="" width="60" />
             </div>
-            <p className="font-14">产品名称</p>
-            <p className="font-12">领取规则领取规则领取规则领取规则</p>
+            <p className="font-14 p-ellips" title={goodName}>
+              {goodName}
+            </p>
+            <p className="font-12" title={getCondition}>
+              {getCondition}
+            </p>
             <div className="clearfix space-20" />
           </div>
           <div>
             <div className="col-sm-6">
               <div>
-                <img src={productPic} alt="" width="100" />
+                <img src={qrcode} alt="" width="100" />
                 <p className="text-wx mt-10">微信</p>
               </div>
             </div>
             <div className="col-sm-6">
               <div>
-                <img src={productPic} alt="" width="100" />
+                <img src={qrcode} alt="" width="100" />
                 <p className="text-zfb">支付宝</p>
               </div>
             </div>

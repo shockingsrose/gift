@@ -7,47 +7,31 @@ import Login from './component/login';
 import Paginate from 'react-paginate';
 import './App.css';
 import './grid.css';
+import apiUser from './api/user';
+import apiGood from './api/good';
+import apiCategory from './api/category';
 import src1 from './img1.png';
 import left from './向左.png';
 import userSrc from './component/cart/userCenter.png';
 import arrowRight from './component/cart/arrow-right.png';
 
+const inititalQuery = () => ({
+  categoryId: '',
+  pageNum: 1,
+  pageSize: 12
+});
 class App extends Component {
   constructor() {
     super();
     this.state = {
-      tagList: [
-        { tagName: '全部', id: 1 },
-        { tagName: '衣服', id: 2 },
-        { tagName: '鞋子', id: 3 },
-        { tagName: '电器', id: 4 },
-        { tagName: '数码', id: 5 },
-        { tagName: '零食', id: 6 },
-        { tagName: '其他', id: 7 }
-      ],
-      list: [
-        { id: 1, img: '', name: '商品名称', description: '领取条件领取条件领取条件' },
-        { id: 2, img: '', name: '商品名称', description: '领取条件领取条件领取条件' },
-        { id: 3, img: '', name: '商品名称', description: '领取条件领取条件领取条件' },
-        { id: 4, img: '', name: '商品名称', description: '领取条件领取条件领取条件' },
-        { id: 5, img: '', name: '商品名称', description: '领取条件领取条件领取条件' },
-        { id: 6, img: '', name: '商品名称', description: '领取条件领取条件领取条件' },
-        { id: 7, img: '', name: '商品名称', description: '领取条件领取条件领取条件' },
-        { id: 8, img: '', name: '商品名称', description: '领取条件领取条件领取条件' },
-        { id: 9, img: '', name: '商品名称', description: '领取条件领取条件领取条件' },
-        { id: 10, img: '', name: '商品名称', description: '领取条件领取条件领取条件' },
-        { id: 11, img: '', name: '商品名称', description: '领取条件领取条件领取条件' },
-        { id: 12, img: '', name: '商品名称', description: '领取条件领取条件领取条件' }
-      ],
-      tagSelected: 1,
+      categoryList: [],
+      list: [],
+
       // 是否滚动了
       scrolled: false,
       // header的margin-bottom的值（tagDiv切换position时改变）
       marginBottom: 0,
-      query: {
-        pageIndex: 1,
-        pageSize: 12
-      },
+      query: inititalQuery(),
       modal_login: {
         show: false
       },
@@ -56,7 +40,7 @@ class App extends Component {
       },
       // 转账
       modal_transfer: {
-        show: true,
+        show: false,
         code: '',
         data: {}
       },
@@ -70,7 +54,19 @@ class App extends Component {
   }
 
   componentDidMount() {
+    this.checkAuth();
     this.addScrollEvent();
+    this.getCategoryList();
+  }
+
+  checkAuth() {
+    const cookie = {};
+    document.cookie.replace(/(\w+)=(\w+);?/g, (str, key, value) => {
+      cookie[key] = value;
+    });
+    if (cookie.account) {
+      this.setState({ loginStatus: true, userInfo: { account: cookie.account } });
+    }
   }
 
   // 滚动事件
@@ -87,8 +83,25 @@ class App extends Component {
     });
   }
 
+  getList(data = this.state.query) {
+    apiGood.getList(data).then(({ list }) => {
+      this.setState({ list });
+    });
+  }
+
+  getCategoryList() {
+    apiCategory.getList().then(({ list }) => {
+      this.setState({ categoryList: list });
+      // 通过获取到的category 获取list
+      const categoryId = list.length > 0 ? list[0].id : 0;
+      this.setState({ query: Object.assign(this.state.query, { categoryId }) }, () => {
+        this.getList(this.state.query);
+      });
+    });
+  }
+
   toggleTag = (id) => {
-    this.setState({ tagSelected: id });
+    this.setState({ query: Object.assign(this.state.query, { categoryId: id }) });
   };
 
   handlePageChange = (...args) => {
@@ -109,7 +122,8 @@ class App extends Component {
 
   login = (account, password) => {
     // 调用接口
-    Promise.resolve('')
+    apiUser
+      .login({ account, password })
       .then(() => {
         this.closeModal('modal_login');
         this.closeModal('modal_register');
@@ -117,15 +131,17 @@ class App extends Component {
         this.refs.login.clear();
         const userInfo = Object.assign(this.state.userInfo, { account });
         this.setState({ userInfo });
+        document.cookie = `account=${account}`;
       })
       .catch(() => {
         this.setState({ loginError: '账号或密码错误' });
       });
   };
 
-  register = (account, password) => {
+  register = (account, password, code) => {
     // 调用接口
-    Promise.resolve('')
+    apiUser
+      .register({ account, password, code })
       .then(() => {
         this.refs.register.clear();
         this.closeModal('modal_register');
@@ -138,6 +154,8 @@ class App extends Component {
     Promise.resolve('').then(() => {
       this.setState({ loginStatus: false, userInfo: {} });
     });
+
+    document.cookie = `account=''`;
   };
 
   toggleLoginStatus = (status) => {
@@ -171,7 +189,13 @@ class App extends Component {
               <div className="col-sm-6">
                 <div className="text-right">
                   <div className="App-login-text">
-                    <LoginStatus loginStatus={loginStatus} showModal={this.showModal} userInfo={this.state.userInfo} loginOut={this.loginOut} />
+                    <LoginStatus
+                      loginStatus={loginStatus}
+                      showModal={this.showModal}
+                      userInfo={this.state.userInfo}
+                      loginOut={this.loginOut}
+                      toggleCartShow={toggleCartShow}
+                    />
                   </div>
                 </div>
               </div>
@@ -194,6 +218,7 @@ class App extends Component {
           </div>
         </div>
         <Cart
+          ref="cart"
           show={cartShow}
           showModal={() => {
             this.showModal('modal_transfer');
@@ -206,15 +231,15 @@ class App extends Component {
         <div className={`${scrolled ? 'scrolled' : ''}`} id="tagDiv">
           <div className="space-20" />
           <div className="container text-left pl-15">
-            {this.state.tagList.map(({ tagName, id }) => (
+            {this.state.categoryList.map(({ categoryName, id }) => (
               <div
                 onClick={() => {
                   this.toggleTag(id);
                 }}
-                className={`button-tag ${this.state.tagSelected === id ? 'active' : ''}`}
+                className={`button-tag ${this.state.query.categoryId === id ? 'active' : ''}`}
                 key={id}
               >
-                {tagName}
+                {categoryName}
               </div>
             ))}
           </div>
@@ -224,16 +249,27 @@ class App extends Component {
         {/* 卡片 */}
         <div className="container">
           <div className="row" />
-          {this.state.list.map(({ id, img, name, description }) => (
+          {this.state.list.map(({ id, goodMainImg, goodName, getCondition }) => (
             <div className="col-sm-4 col-md-3" key={id}>
               <div className="card">
                 <div className="card-img mb-10">
-                  <img alt="" src={img} />
+                  <img alt="" src={goodMainImg} className="width-100" />
                 </div>
                 <div className="plr-20">
-                  <p className="font-14 cart-text">{name}</p>
-                  <p className="font-12 mb-10 cart-text">{description}</p>
-                  <div className="button-collection">领取</div>
+                  <p className="font-14 cart-text p-ellips" title={goodName}>
+                    {goodName}
+                  </p>
+                  <p className="font-12 mb-10 cart-text p-ellips" title={getCondition}>
+                    {getCondition}
+                  </p>
+                  <div
+                    className="button-collection"
+                    onClick={() => {
+                      this.showModal('modal_transfer', { data: { id, goodMainImg, goodName, getCondition } });
+                    }}
+                  >
+                    领取
+                  </div>
                 </div>
               </div>
             </div>
@@ -293,12 +329,13 @@ class App extends Component {
               this.closeModal('modal_register');
             }}
             toLogin={this.toLogin}
-            register={(account, password) => {
-              this.register(account, password);
+            register={(account, password, code) => {
+              this.register(account, password, code);
             }}
           />
         </Modal>
         <TransferModal
+          data={modal_transfer.data}
           show={modal_transfer.show}
           handleClose={() => {
             this.closeModal('modal_transfer');
@@ -312,10 +349,19 @@ class App extends Component {
 class LoginStatus extends Component {
   render() {
     const { userInfo, loginStatus } = this.props;
-    const { showModal } = this.props;
+    const { showModal, toggleCartShow } = this.props;
     return loginStatus ? (
       <div>
-        <span className="color-userName">欢迎您！{userInfo.account}</span> | <span className="pointer">个人中心</span> |{' '}
+        <span className="color-userName">欢迎您！{userInfo.account}</span> |{' '}
+        <span
+          className="pointer"
+          onClick={() => {
+            toggleCartShow(true);
+          }}
+        >
+          个人中心
+        </span>{' '}
+        |{' '}
         <span className="pointer" onClick={this.props.loginOut}>
           退出
         </span>

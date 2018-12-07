@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import apiUser from '../api/user';
 class Register extends Component {
   constructor() {
     super();
@@ -16,18 +17,31 @@ class Register extends Component {
   handleInputChange = (key, value) => {
     this.setState({ [key]: value });
   };
+  // 获取验证码
+  getAuthCode = (account, type = 2) => {
+    apiUser.getCode({ account, type }).catch((err) => {
+      this.setState({ error: '获取验证码失败' });
+    });
+  };
+
+  //验证二维码
+  validateCode = (account, code) => {
+    Promise.resolve('')
+      .then(() => {
+        this.setState({ step: 2, error: '' });
+      })
+      .catch(() => {
+        this.setState({ error: '二维码验证失败，请重新输入' });
+      });
+  };
 
   nextStep = () => {
     if (this.state.account === '' || this.state.auth === '') {
       this.setState({ error: `${this.state.account === '' ? '请输入手机号/邮箱' : '请输入验证码'}` });
       return;
     }
-    console.log(`账号${this.state.account}`);
-    console.log(`验证码${this.state.auth}`);
     // 调用接口 判断验证码是否正确
-    setTimeout(() => {
-      this.setState({ step: 2, error: '' });
-    }, 300);
+    this.validateCode(this.state.account, this.state.auth);
   };
 
   clear = () => {
@@ -46,9 +60,6 @@ class Register extends Component {
       }
     }, 1000);
   };
-  getAuthCode = () => {
-    console.log('调用获取验证码');
-  };
   // 验证
   validate = () => {
     if (!this.state.account) {
@@ -56,26 +67,19 @@ class Register extends Component {
       return;
     }
     if (this.state.second === '验证') {
-      this.getAuthCode();
+      this.getAuthCode(this.state.account);
       this.countDown();
       this.setState({ error: '' });
     }
   };
-  // 登录
-  login = () => {
-    if (this.state.account === '' || this.state.password === '') {
-      this.setState({ error: `${this.state.account === '' ? '请输入账号' : '请输入密码'}` });
+  // 注册
+  register = () => {
+    if (this.state.password === '') {
+      this.setState({ error: '请输入密码' });
       return;
     }
-    console.log(`账号${this.state.account}`);
-    console.log(`密码${this.state.password}`);
-
-    // 调用登录接口 如果成功，关闭modal 否则提示密码错误
-    if (true) {
-      //  调用父组件的
-      this.props.register(this.state.account, this.state.password);
-    } else {
-    }
+    const { auth, account, password } = this.state;
+    this.props.register(account, password, auth);
   };
 
   render() {
@@ -144,7 +148,7 @@ class Register extends Component {
               </p>
             ) : null}
 
-            <div className="button-red" onClick={this.login}>
+            <div className="button-red" onClick={this.register}>
               完成注册
             </div>
           </div>

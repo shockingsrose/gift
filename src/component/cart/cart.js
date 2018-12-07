@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import showTime from '../../utils/showTIme';
 import './style.css';
+import apiOrder from '../../api/order';
 import userSrc from './userCenter.png';
 import arrowRight from './arrow-right.png';
 import productSrc from './product.jpeg';
@@ -17,7 +18,7 @@ class Cart extends Component {
     this.state = {
       list: [],
       // 1代表未过期 0代表过期
-      type: 1
+      status: 1
     };
   }
 
@@ -25,13 +26,14 @@ class Cart extends Component {
     this.getList(1);
   }
 
-  getList = (type) => {
-    const list = type === 1 ? data.filter((item, index) => index < 2) : data.filter((item, index) => index >= 2);
-    this.setState({ list, type });
+  getList = (status) => {
+    // const list = status === 1 ? data.filter((item, index) => index < 2) : data.filter((item, index) => index >= 2);
+    // this.setState({ list, status });
+    apiOrder.list();
   };
 
   render() {
-    const { list, type } = this.state;
+    const { list, status } = this.state;
     const { getList } = this;
     const { show, handleClose, showModal } = this.props;
 
@@ -52,7 +54,7 @@ class Cart extends Component {
         </div>
         <div className="tab-wrap">
           <span
-            className={`${type === 1 ? 'tab-red' : ''} pointer`}
+            className={`${status === 1 ? 'tab-red' : ''} pointer`}
             onClick={() => {
               getList(1);
             }}
@@ -61,7 +63,7 @@ class Cart extends Component {
           </span>{' '}
           |{' '}
           <span
-            className={`${type === 0 ? 'tab-red' : ''} pointer`}
+            className={`${status === 0 ? 'tab-red' : ''} pointer`}
             onClick={() => {
               getList(0);
             }}
