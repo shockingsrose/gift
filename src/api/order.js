@@ -5,6 +5,6 @@ export default {
     return httpClient.post({ url: '/order/add', data });
   },
   list(data) {
-    return httpClient.get({ url: '/order/getList', data });
+    return httpClient.post({ url: '/order/getListByOwner', data, token: true });
   }
 };

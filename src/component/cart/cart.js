@@ -4,7 +4,6 @@ import './style.css';
 import apiOrder from '../../api/order';
 import userSrc from './userCenter.png';
 import arrowRight from './arrow-right.png';
-import productSrc from './product.jpeg';
 
 const data = [
   { orderNumber: '123456', productTitle: '商品名称商品名称商品名称商品名称商品名称商品名称', endTime: '2018-12-12' },
@@ -12,13 +11,15 @@ const data = [
   { orderNumber: '213123123143', productTitle: '商品名称商品名称商品名称商品名称商品名称商品名称', endTime: '2018-11-12' },
   { orderNumber: '213123123153', productTitle: '商品名称商品名称商品名称商品名称商品名称商品名称', endTime: '2018-11-12' }
 ];
+
+
 class Cart extends Component {
   constructor() {
     super();
     this.state = {
       list: [],
       // 1代表未过期 0代表过期
-      status: 1
+      status: 1,
     };
   }
 
@@ -26,10 +27,24 @@ class Cart extends Component {
     this.getList(1);
   }
 
+  componentWillReceiveProps(props) {
+    
+    if(props.show) {
+      this.getList(1);
+    }
+  }
+
+
   getList = (status) => {
-    // const list = status === 1 ? data.filter((item, index) => index < 2) : data.filter((item, index) => index >= 2);
-    // this.setState({ list, status });
-    apiOrder.list();
+    if( !this.props.loginStatus ) {
+       return;
+    }
+    const statusList = status === 0 ? [4, 5] : [1, 2, 3];
+    
+    apiOrder.list({ statusList })
+      .then(( list = [] ) => {        
+        this.setState({ list, status });
+      })
   };
 
   render() {
@@ -72,15 +87,15 @@ class Cart extends Component {
           </span>
         </div>
         <div className="cart-content">
-          {list.map((item) => (
+          {list.length > 0 ? list.map((item) => (
             <Product
               {...item}
-              key={item.orderNumber}
+              key={item.orderNo}
               showTransferModal={() => {
                 showModal(item);
               }}
             />
-          ))}
+          )) : '暂无订单'}
         </div>
       </div>
     );
@@ -103,9 +118,9 @@ class Product extends Component {
     }, 1000);
   }
 
-  renderTime = (endTime) => {
-    let time = showTime(this.props.endTime);
-    time = time ? `剩余${time.day}天${time.hour}时${time.min}分${time.second}秒` : false;
+  renderTime = () => {
+    let time = showTime(this.props.expireTime);
+    time = time ? `剩余${time.day}天${time.hour}时${time.min}分` : false;
     this.setState({ time: time });
   };
 
@@ -114,29 +129,45 @@ class Product extends Component {
   }
 
   render() {
-    const { orderNumber, productTitle, showTransferModal } = this.props;
+    const { orderNo, goodName, showTransferModal, goodMainImg, status } = this.props;
     const { time } = this.state;
+
+    let renderOperate = '';
+    switch(status) {
+      case 1:
+        renderOperate =  <div className="product-time">未确定</div>;
+      break;
+      case 2:
+      case 3:
+        renderOperate =  <div className="product-time">{time}</div>;
+      break;
+      case 4:
+      case 5:
+        renderOperate = 
+        <div>
+          <div className="product-outTime mr-20">剩余0天</div>
+          {/* <div className="product-refund pointer" onClick={showTransferModal}>
+            申请退款
+          </div> */}
+        </div>
+        break; 
+      default:
+        renderOperate =  <div className="product-time">未确定</div>;
+        break;  
+    }
+
     return (
       <div className="product-wrap">
         <div className="">
           <div className="float-left product-img-wrap">
-            <img src={productSrc} alt="" className="width-100" />
+            <img src={goodMainImg} alt="" className="width-100" />
           </div>
           <div className="product-content-pos">
             <div className="product-content-wrap">
-              <p className="color-999">订单编号: {orderNumber}</p>
-              <p>{productTitle}</p>
+              <p className="color-999 p-ellips" title={orderNo}>订单编号: {orderNo}</p>
+              <p>{goodName}</p>
               <div className="product-content-operate">
-                {time ? (
-                  <div className="product-time">{time}</div>
-                ) : (
-                  <div>
-                    <div className="product-outTime mr-20">剩余0天</div>
-                    <div className="product-refund pointer" onClick={showTransferModal}>
-                      申请退款
-                    </div>
-                  </div>
-                )}
+                {renderOperate}
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+
 class Login extends Component {
   constructor() {
     super();
@@ -24,8 +25,6 @@ class Login extends Component {
       this.setState({ error: `${this.state.account === '' ? '请输入账号' : '请输入密码'}` });
       return;
     }
-    console.log(`账号${this.state.account}`);
-    console.log(`密码${this.state.password}`);
     // 调用登录接口 如果成功，关闭modal 否则提示密码错误
     if (true) {
       //  调用父组件的

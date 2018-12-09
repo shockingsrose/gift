@@ -26,7 +26,7 @@ class Register extends Component {
 
   //验证二维码
   validateCode = (account, code) => {
-    Promise.resolve('')
+    apiUser.checkCode({account, code})
       .then(() => {
         this.setState({ step: 2, error: '' });
       })

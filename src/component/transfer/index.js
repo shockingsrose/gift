@@ -1,31 +1,33 @@
 import React, { Component } from 'react';
 import Modal from '../Modal';
 import qrcode from './qrcode.png';
+import apiOrder from '../../api/order'
 import './style.css';
 
 class TransferModal extends Component {
   constructor() {
     super();
     this.state = {
-      code: '',
+      payCode: '',
       error: ''
     };
   }
 
   inputChange = (e) => {
-    this.setState({ code: e.target.value });
+    this.setState({ payCode: e.target.value });
   };
 
   submit = () => {
-    if (!this.state.code) {
+    if (!this.state.payCode) {
       this.setState({ error: '请输入支付代码' });
       return;
     }
     // 调用接口
-    Promise.resolve('')
-      .then(() => {
+    const reqData = {payCode: this.state.payCode, uid: Number(this.props.data.uid), goodsId: Number(this.props.data.goodsId)}
+    apiOrder.add(reqData)
+      .then(() => {        
         this.props.handleClose();
-        this.setState({ code: '', error: '' });
+        this.setState({ payCode: '', error: '' });
       })
       .catch(() => {
         this.setState({ error: '请输入正确的支付代码' });
@@ -34,7 +36,7 @@ class TransferModal extends Component {
 
   render() {
     const { show, handleClose, data } = this.props;
-    const { code, error } = this.state;
+    const { payCode, error } = this.state;
     const { inputChange, submit } = this;
     const { id, goodName, goodMainImg, getCondition } = data;
     return (
@@ -68,7 +70,7 @@ class TransferModal extends Component {
             <div className="clearfix" />
           </div>
           <div className="transfer-inputWrap">
-            <input className="input" value={code} onChange={inputChange} placeholder="请输入支付代码" />
+            <input className="input" value={payCode} onChange={inputChange} placeholder="请输入支付代码" />
             {error === '' ? null : (
               <p className="text-err text-left block-center" style={{ width: '240px' }}>
                 {error}

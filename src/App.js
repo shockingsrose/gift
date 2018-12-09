@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Cookies  from 'js-cookie';
 import Modal from './component/Modal';
 import Register from './component/register';
 import TransferModal from './component/transfer';
@@ -26,7 +27,7 @@ class App extends Component {
     this.state = {
       categoryList: [],
       list: [],
-
+      pageTotal: 0,
       // 是否滚动了
       scrolled: false,
       // header的margin-bottom的值（tagDiv切换position时改变）
@@ -47,7 +48,9 @@ class App extends Component {
       loginStatus: false,
       loginError: '',
       userInfo: {
-        account: ''
+        account: '',
+        id: '',
+        token: '',
       },
       cartShow: false
     };
@@ -57,15 +60,15 @@ class App extends Component {
     this.checkAuth();
     this.addScrollEvent();
     this.getCategoryList();
+    
   }
 
   checkAuth() {
-    const cookie = {};
-    document.cookie.replace(/(\w+)=(\w+);?/g, (str, key, value) => {
-      cookie[key] = value;
-    });
-    if (cookie.account) {
-      this.setState({ loginStatus: true, userInfo: { account: cookie.account } });
+    const  account =  Cookies.get('account');
+    const  userId =  Cookies.get('userId');
+    const  token =  Cookies.get('token');
+    if (token) {
+      this.setState({ loginStatus: true, userInfo: { account, id: userId, token } });
     }
   }
 
@@ -84,8 +87,8 @@ class App extends Component {
   }
 
   getList(data = this.state.query) {
-    apiGood.getList(data).then(({ list }) => {
-      this.setState({ list });
+    apiGood.getList(data).then(({ list, total }) => {
+      this.setState({ list, pageTotal: Math.ceil(total/this.state.query.pageSize) });
     });
   }
 
@@ -101,11 +104,17 @@ class App extends Component {
   }
 
   toggleTag = (id) => {
-    this.setState({ query: Object.assign(this.state.query, { categoryId: id }) });
+    this.setState({ query: Object.assign(this.state.query, { categoryId: id }) }, () => {
+      this.getList();
+    });
   };
 
-  handlePageChange = (...args) => {
-    console.log(args);
+  handlePageChange = ({ selected }) => {
+    this.setState({ query: Object.assign(this.state.query, { pageNum: selected + 1 })},
+    () => {
+      this.getList();
+    }
+    )
   };
 
   showModal = (modalName, data = {}) => {
@@ -124,14 +133,17 @@ class App extends Component {
     // 调用接口
     apiUser
       .login({ account, password })
-      .then(() => {
+      .then(({id, token}) => {
         this.closeModal('modal_login');
         this.closeModal('modal_register');
         this.toggleLoginStatus(true);
         this.refs.login.clear();
-        const userInfo = Object.assign(this.state.userInfo, { account });
+        const userInfo = Object.assign(this.state.userInfo, { account, id, token });
         this.setState({ userInfo });
-        document.cookie = `account=${account}`;
+        
+        Cookies.set('account', account, { expires: 7 });
+        Cookies.set('userId', id, {expires: 7} );
+        Cookies.set('token', token, {expires: 7} );
       })
       .catch(() => {
         this.setState({ loginError: '账号或密码错误' });
@@ -151,11 +163,10 @@ class App extends Component {
   };
 
   loginOut = () => {
-    Promise.resolve('').then(() => {
       this.setState({ loginStatus: false, userInfo: {} });
-    });
-
-    document.cookie = `account=''`;
+      Cookies.remove('account');
+      Cookies.remove('userId');
+      Cookies.remove('token');
   };
 
   toggleLoginStatus = (status) => {
@@ -175,7 +186,7 @@ class App extends Component {
     this.setState({ cartShow: show });
   };
   render() {
-    const { scrolled, marginBottom, loginStatus, loginError } = this.state;
+    const { scrolled, marginBottom, loginStatus, loginError, userInfo, pageTotal } = this.state;
     const { modal_login, modal_register, cartShow, modal_transfer } = this.state;
     const { toggleCartShow } = this;
     return (
@@ -204,7 +215,9 @@ class App extends Component {
         </header>
 
         {/* cart */}
-        <div
+        {loginStatus ? 
+        <div>
+          <div
           className="App-cart pointer"
           onClick={() => {
             toggleCartShow(true);
@@ -226,7 +239,10 @@ class App extends Component {
           handleClose={() => {
             this.toggleCartShow(false);
           }}
+          loginStatus={ loginStatus }
         />
+        </div> 
+        : null}
         {/* 标签 */}
         <div className={`${scrolled ? 'scrolled' : ''}`} id="tagDiv">
           <div className="space-20" />
@@ -265,7 +281,7 @@ class App extends Component {
                   <div
                     className="button-collection"
                     onClick={() => {
-                      this.showModal('modal_transfer', { data: { id, goodMainImg, goodName, getCondition } });
+                      this.showModal('modal_transfer', { data: { goodsId: id, goodMainImg, goodName, getCondition, uid: userInfo.id } });
                     }}
                   >
                     领取
@@ -278,11 +294,13 @@ class App extends Component {
 
         <div className="space-30" />
         <div className="block-center">
-          <Paginate
+          {pageTotal <= 0 
+          ? <p>暂无商品</p> 
+          : <Paginate
             previousLabel={<img src={left} alt="" />}
             nextLabel={<img src={left} alt="" className={'right'} />}
             breakLabel={<img src={src1} alt="" />}
-            pageCount={20}
+            pageCount={pageTotal}
             marginPagesDisplayed={5}
             pageRangeDisplayed={5}
             onPageChange={this.handlePageChange}
@@ -293,7 +311,7 @@ class App extends Component {
             activeClassName={'active'}
             pageClassName={'page'}
             breakClassName={'break-me'}
-          />
+          />}
         </div>
         <div className="space-30" />
         <Modal
