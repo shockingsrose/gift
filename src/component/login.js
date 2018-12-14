@@ -40,23 +40,28 @@ class Login extends Component {
     const { account, password, error } = this.state;
     return (
       <div>
-        <input
-          className="input"
-          value={account}
-          placeholder="请输入手机号/邮箱"
-          onChange={(e) => {
-            this.handleInputChange('account', e.target.value);
-          }}
-        />
-        <input
-          className="input"
-          value={password}
-          placeholder="请输入密码"
-          type="password"
-          onChange={(e) => {
-            this.handleInputChange('password', e.target.value);
-          }}
-        />
+        <div className="input-control block-center input-bg">
+          <input
+            className="input"
+            style={{ width: '240px' }}
+            value={account}
+            placeholder="请输入手机号/邮箱"
+            onChange={(e) => {
+              this.handleInputChange('account', e.target.value);
+            }}
+          />
+        </div>
+        <div className="input-control block-center input-bg">
+          <input
+            className="input"
+            value={password}
+            placeholder="请输入密码"
+            type="password"
+            onChange={(e) => {
+              this.handleInputChange('password', e.target.value);
+            }}
+          />
+        </div>
         {error !== '' ? (
           <p style={{ width: '240px' }} className="text-err text-left inline-block mb-10">
             {error}

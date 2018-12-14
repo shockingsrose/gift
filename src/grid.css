@@ -24,6 +24,11 @@ body {
   font-size: 12px;
   font-weight: 400;
 }
+.text-success {
+  color: rgba(139, 195, 74, 1);
+  font-size: 12px;
+  font-weight: 400;
+}
 .color-999 {
   color: #999;
 }

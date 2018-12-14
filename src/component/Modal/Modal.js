@@ -49,7 +49,7 @@ class Modal extends Component {
   };
   render() {
     const { show } = this.state;
-    const { onOk, onCancel, title, width = 320, footer } = this.props;
+    const { onOk, onCancel, title, width = 350, footer } = this.props;
     return (
       <div style={{ display: show ? 'block' : 'none' }}>
         {/* <div className={`modal-box ${show ? 'fadeIn' : 'fadeOut'}`}> */}

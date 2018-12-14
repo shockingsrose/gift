@@ -183,7 +183,7 @@
 }
 
 .input {
-  width: 240px;
+  width: 180px;
   height: 40px;
   line-height: 20px;
   border: 0;
@@ -194,7 +194,6 @@
   text-align: left;
   outline: 0;
   font-size: 14px;
-  margin-bottom: 20px;
 }
 
 .button-red {
@@ -214,7 +213,14 @@
 
 .input-control {
   width: 240px;
+  margin-bottom: 20px;
   position: relative;
+  text-align: left;
+}
+
+.input-bg {
+  background-color: rgba(242, 242, 242, 1);
+  border-radius: 400px;
 }
 
 .input-prefix {

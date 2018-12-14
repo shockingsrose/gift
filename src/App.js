@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Cookies  from 'js-cookie';
+import Cookies from 'js-cookie';
 import Modal from './component/Modal';
 import Register from './component/register';
 import TransferModal from './component/transfer';
@@ -15,6 +15,7 @@ import src1 from './img1.png';
 import left from './向左.png';
 import userSrc from './component/cart/userCenter.png';
 import arrowRight from './component/cart/arrow-right.png';
+import good from './api/good';
 
 const inititalQuery = () => ({
   categoryId: '',
@@ -50,7 +51,7 @@ class App extends Component {
       userInfo: {
         account: '',
         id: '',
-        token: '',
+        token: ''
       },
       cartShow: false
     };
@@ -60,13 +61,12 @@ class App extends Component {
     this.checkAuth();
     this.addScrollEvent();
     this.getCategoryList();
-    
   }
 
   checkAuth() {
-    const  account =  Cookies.get('account');
-    const  userId =  Cookies.get('userId');
-    const  token =  Cookies.get('token');
+    const account = Cookies.get('account');
+    const userId = Cookies.get('userId');
+    const token = Cookies.get('token');
     if (token) {
       this.setState({ loginStatus: true, userInfo: { account, id: userId, token } });
     }
@@ -88,7 +88,7 @@ class App extends Component {
 
   getList(data = this.state.query) {
     apiGood.getList(data).then(({ list, total }) => {
-      this.setState({ list, pageTotal: Math.ceil(total/this.state.query.pageSize) });
+      this.setState({ list, pageTotal: Math.ceil(total / this.state.query.pageSize) });
     });
   }
 
@@ -110,11 +110,9 @@ class App extends Component {
   };
 
   handlePageChange = ({ selected }) => {
-    this.setState({ query: Object.assign(this.state.query, { pageNum: selected + 1 })},
-    () => {
+    this.setState({ query: Object.assign(this.state.query, { pageNum: selected + 1 }) }, () => {
       this.getList();
-    }
-    )
+    });
   };
 
   showModal = (modalName, data = {}) => {
@@ -133,17 +131,17 @@ class App extends Component {
     // 调用接口
     apiUser
       .login({ account, password })
-      .then(({id, token}) => {
+      .then(({ id, token }) => {
         this.closeModal('modal_login');
         this.closeModal('modal_register');
         this.toggleLoginStatus(true);
         this.refs.login.clear();
         const userInfo = Object.assign(this.state.userInfo, { account, id, token });
         this.setState({ userInfo });
-        
+
         Cookies.set('account', account, { expires: 7 });
-        Cookies.set('userId', id, {expires: 7} );
-        Cookies.set('token', token, {expires: 7} );
+        Cookies.set('userId', id, { expires: 7 });
+        Cookies.set('token', token, { expires: 7 });
       })
       .catch(() => {
         this.setState({ loginError: '账号或密码错误' });
@@ -163,10 +161,10 @@ class App extends Component {
   };
 
   loginOut = () => {
-      this.setState({ loginStatus: false, userInfo: {} });
-      Cookies.remove('account');
-      Cookies.remove('userId');
-      Cookies.remove('token');
+    this.setState({ loginStatus: false, userInfo: {} });
+    Cookies.remove('account');
+    Cookies.remove('userId');
+    Cookies.remove('token');
   };
 
   toggleLoginStatus = (status) => {
@@ -189,6 +187,9 @@ class App extends Component {
     const { scrolled, marginBottom, loginStatus, loginError, userInfo, pageTotal } = this.state;
     const { modal_login, modal_register, cartShow, modal_transfer } = this.state;
     const { toggleCartShow } = this;
+    const navigate = (href) => {
+      window.open(href);
+    };
     return (
       <div className="App">
         <header className="App-header" style={{ marginBottom }}>
@@ -215,34 +216,34 @@ class App extends Component {
         </header>
 
         {/* cart */}
-        {loginStatus ? 
-        <div>
-          <div
-          className="App-cart pointer"
-          onClick={() => {
-            toggleCartShow(true);
-          }}
-        >
-          <div className="ptb-10">
-            <img src={arrowRight} alt="" style={{ transform: 'rotate(180deg)' }} />
+        {loginStatus ? (
+          <div>
+            <div
+              className="App-cart pointer"
+              onClick={() => {
+                toggleCartShow(true);
+              }}
+            >
+              <div className="ptb-10">
+                <img src={arrowRight} alt="" style={{ transform: 'rotate(180deg)' }} />
+              </div>
+              <div className="ptb-10">
+                <img src={userSrc} alt="" />
+              </div>
+            </div>
+            <Cart
+              ref="cart"
+              show={cartShow}
+              showModal={() => {
+                this.showModal('modal_transfer');
+              }}
+              handleClose={() => {
+                this.toggleCartShow(false);
+              }}
+              loginStatus={loginStatus}
+            />
           </div>
-          <div className="ptb-10">
-            <img src={userSrc} alt="" />
-          </div>
-        </div>
-        <Cart
-          ref="cart"
-          show={cartShow}
-          showModal={() => {
-            this.showModal('modal_transfer');
-          }}
-          handleClose={() => {
-            this.toggleCartShow(false);
-          }}
-          loginStatus={ loginStatus }
-        />
-        </div> 
-        : null}
+        ) : null}
         {/* 标签 */}
         <div className={`${scrolled ? 'scrolled' : ''}`} id="tagDiv">
           <div className="space-20" />
@@ -265,14 +266,25 @@ class App extends Component {
         {/* 卡片 */}
         <div className="container">
           <div className="row" />
-          {this.state.list.map(({ id, goodMainImg, goodName, getCondition }) => (
+          {this.state.list.map(({ id, goodMainImg, goodName, getCondition, goodUrl }) => (
             <div className="col-sm-4 col-md-3" key={id}>
               <div className="card">
-                <div className="card-img mb-10">
+                <div
+                  className="card-img mb-10 pointer"
+                  onClick={() => {
+                    navigate(goodUrl);
+                  }}
+                >
                   <img alt="" src={goodMainImg} className="width-100" />
                 </div>
                 <div className="plr-20">
-                  <p className="font-14 cart-text p-ellips" title={goodName}>
+                  <p
+                    className="font-14 cart-text p-ellips pointer"
+                    title={goodName}
+                    onClick={() => {
+                      navigate(goodUrl);
+                    }}
+                  >
                     {goodName}
                   </p>
                   <p className="font-12 mb-10 cart-text p-ellips" title={getCondition}>
@@ -294,24 +306,26 @@ class App extends Component {
 
         <div className="space-30" />
         <div className="block-center">
-          {pageTotal <= 0 
-          ? <p>暂无商品</p> 
-          : <Paginate
-            previousLabel={<img src={left} alt="" />}
-            nextLabel={<img src={left} alt="" className={'right'} />}
-            breakLabel={<img src={src1} alt="" />}
-            pageCount={pageTotal}
-            marginPagesDisplayed={5}
-            pageRangeDisplayed={5}
-            onPageChange={this.handlePageChange}
-            containerClassName={'pagination'}
-            nextClassName={'next-page'}
-            previousClassName={'previous-page'}
-            pageLinkClassName={'pageLinkClassName'}
-            activeClassName={'active'}
-            pageClassName={'page'}
-            breakClassName={'break-me'}
-          />}
+          {pageTotal <= 0 ? (
+            <p>暂无商品</p>
+          ) : (
+            <Paginate
+              previousLabel={<img src={left} alt="" />}
+              nextLabel={<img src={left} alt="" className={'right'} />}
+              breakLabel={<img src={src1} alt="" />}
+              pageCount={pageTotal}
+              marginPagesDisplayed={5}
+              pageRangeDisplayed={5}
+              onPageChange={this.handlePageChange}
+              containerClassName={'pagination'}
+              nextClassName={'next-page'}
+              previousClassName={'previous-page'}
+              pageLinkClassName={'pageLinkClassName'}
+              activeClassName={'active'}
+              pageClassName={'page'}
+              breakClassName={'break-me'}
+            />
+          )}
         </div>
         <div className="space-30" />
         <Modal
