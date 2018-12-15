@@ -1,21 +1,16 @@
 import React, { Component } from 'react';
 import Cookies from 'js-cookie';
+import throttle from './utils/throttle';
 import Modal from './component/Modal';
 import Register from './component/register';
 import TransferModal from './component/transfer';
 import Cart from './component/cart';
 import Login from './component/login';
-import Paginate from 'react-paginate';
 import './App.css';
 import './grid.css';
 import apiUser from './api/user';
 import apiGood from './api/good';
 import apiCategory from './api/category';
-import src1 from './img1.png';
-import left from './向左.png';
-import userSrc from './component/cart/userCenter.png';
-import arrowRight from './component/cart/arrow-right.png';
-import good from './api/good';
 
 const inititalQuery = () => ({
   categoryId: '',
@@ -28,9 +23,8 @@ class App extends Component {
     this.state = {
       categoryList: [],
       list: [],
+      pageBottom: false,
       pageTotal: 0,
-      // 是否滚动了
-      scrolled: false,
       // header的margin-bottom的值（tagDiv切换position时改变）
       marginBottom: 0,
       query: inititalQuery(),
@@ -53,14 +47,16 @@ class App extends Component {
         id: '',
         token: ''
       },
-      cartShow: false
+      cartShow: false,
+      scrollWidth: 0
     };
   }
 
   componentDidMount() {
     this.checkAuth();
-    this.addScrollEvent();
     this.getCategoryList();
+    this.TagScrollEvent();
+    this.getListByScroll();
   }
 
   checkAuth() {
@@ -72,23 +68,67 @@ class App extends Component {
     }
   }
 
-  // 滚动事件
-  addScrollEvent() {
-    document.body.addEventListener('mousewheel', (e) => {
-      //监听滚动事件 当超过滚动距离50px 为tagDiv增加scrolled类，并改变marginBottom的值
-      if (window.scrollY > 50 && !this.state.scrolled) {
-        const tagDiv = document.getElementById('tagDiv');
-        const tagStyle = window.getComputedStyle(tagDiv);
-        this.setState({ scrolled: true, marginBottom: tagStyle['height'] });
-      } else if (window.scrollY <= 50 && this.state.scrolled) {
-        this.setState({ scrolled: false, marginBottom: 0 });
+  // 标签条滚动
+  TagScrollEvent() {
+    const tagDiv = document.getElementById('tagDiv');
+    tagDiv.addEventListener('mousewheel', (e) => {
+      e.preventDefault();
+      let { scrollWidth } = this.state;
+      const tagContainer = document.querySelector('#tagDiv .container');
+      const tagContainerStyle = window.getComputedStyle(tagContainer);
+      // 可视tag宽度
+      const tagContainerWidth = tagContainerStyle['width'].split('px')[0];
+      // tag总宽度
+      const tagScrollWidth = this.state.categoryList.length * 140;
+      // 最多位移大小
+      const limitWidth = tagScrollWidth - tagContainerWidth;
+      // 每次滚动移动的值
+      const scrollValue = 60;
+
+      if (tagScrollWidth < tagContainerWidth) {
+        return;
       }
+
+      //向下滚动
+      if (e.wheelDelta > 0) {
+        scrollWidth = scrollWidth - scrollValue > -limitWidth ? scrollWidth - scrollValue : -limitWidth;
+      } else {
+        scrollWidth = scrollWidth + scrollValue < 0 ? scrollWidth + scrollValue : 0;
+      }
+      this.setState({ scrollWidth });
     });
   }
 
+  // 无限滚动
+  getListByScroll = () => {
+    document.body.addEventListener(
+      'mousewheel',
+      throttle(() => {
+        if (this.state.pageBottom) {
+          return;
+        }
+        const bodyHeight = document.body.clientHeight;
+        const windowHeight = window.innerHeight;
+        const scrollHeight = window.scrollY;
+
+        if (bodyHeight - (scrollHeight + windowHeight) <= 50) {
+          this.setState(
+            {
+              query: Object.assign(this.state.query, { pageNum: this.state.query.pageNum + 1 })
+            },
+            () => {
+              console.log('getlist');
+              this.getList();
+            }
+          );
+        }
+      }, 1000)
+    );
+  };
+
   getList(data = this.state.query) {
-    apiGood.getList(data).then(({ list, total }) => {
-      this.setState({ list, pageTotal: Math.ceil(total / this.state.query.pageSize) });
+    apiGood.getList(data).then(({ list, isLastPage }) => {
+      this.setState({ list: [...this.state.list, ...list], pageBottom: isLastPage });
     });
   }
 
@@ -104,7 +144,7 @@ class App extends Component {
   }
 
   toggleTag = (id) => {
-    this.setState({ query: Object.assign(this.state.query, { categoryId: id }) }, () => {
+    this.setState({ query: Object.assign(this.state.query, { categoryId: id, pageNum: 1 }), list: [] }, () => {
       this.getList();
     });
   };
@@ -153,11 +193,15 @@ class App extends Component {
     apiUser
       .register({ account, password, code })
       .then(() => {
-        this.refs.register.clear();
-        this.closeModal('modal_register');
-        this.showModal('modal_login');
+        this.refs.register.success();
+        setTimeout(() => {
+          this.closeModal('modal_register');
+          this.showModal('modal_login');
+        }, 2000);
       })
-      .catch(() => {});
+      .catch(({ message }) => {
+        this.refs.register.setState({ error: message });
+      });
   };
 
   loginOut = () => {
@@ -184,7 +228,7 @@ class App extends Component {
     this.setState({ cartShow: show });
   };
   render() {
-    const { scrolled, marginBottom, loginStatus, loginError, userInfo, pageTotal } = this.state;
+    const { marginBottom, loginStatus, loginError, userInfo } = this.state;
     const { modal_login, modal_register, cartShow, modal_transfer } = this.state;
     const { toggleCartShow } = this;
     const navigate = (href) => {
@@ -217,7 +261,7 @@ class App extends Component {
 
         {/* cart */}
         {loginStatus ? (
-          <div>
+          <div className="cart-box">
             <div
               className="App-cart pointer"
               onClick={() => {
@@ -225,10 +269,11 @@ class App extends Component {
               }}
             >
               <div className="ptb-10">
-                <img src={arrowRight} alt="" style={{ transform: 'rotate(180deg)' }} />
+                <i className="iconfont icon-xiangzuo color-fff" style={{ transform: 'rotate(180deg)' }} />
               </div>
               <div className="ptb-10">
-                <img src={userSrc} alt="" />
+                {/* <img src={userSrc} alt="" /> */}
+                <i className="iconfont icon-iconfonticon5" />
               </div>
             </div>
             <Cart
@@ -245,88 +290,96 @@ class App extends Component {
           </div>
         ) : null}
         {/* 标签 */}
-        <div className={`${scrolled ? 'scrolled' : ''}`} id="tagDiv">
+        <div id="tagDiv">
           <div className="space-20" />
-          <div className="container text-left pl-15">
-            {this.state.categoryList.map(({ categoryName, id }) => (
+          <div>
+            <div className="container text-left pl-15 overflow-hidden">
               <div
-                onClick={() => {
-                  this.toggleTag(id);
-                }}
-                className={`button-tag ${this.state.query.categoryId === id ? 'active' : ''}`}
-                key={id}
+                className="tagScroll"
+                style={{ width: `${this.state.categoryList.length * 140}px`, transform: `translateX(${this.state.scrollWidth}px)` }}
               >
-                {categoryName}
+                {this.state.categoryList.map(({ categoryName, id }) => (
+                  <div
+                    onClick={() => {
+                      this.toggleTag(id);
+                    }}
+                    className={`button-tag ${this.state.query.categoryId === id ? 'active' : ''}`}
+                    key={id}
+                  >
+                    {categoryName}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
-        <div className="space-10" />
         {/* 卡片 */}
         <div className="container">
-          <div className="row" />
-          {this.state.list.map(({ id, goodMainImg, goodName, getCondition, goodUrl }) => (
-            <div className="col-sm-4 col-md-3" key={id}>
-              <div className="card">
-                <div
-                  className="card-img mb-10 pointer"
-                  onClick={() => {
-                    navigate(goodUrl);
-                  }}
-                >
-                  <img alt="" src={goodMainImg} className="width-100" />
-                </div>
-                <div className="plr-20">
-                  <p
-                    className="font-14 cart-text p-ellips pointer"
-                    title={goodName}
+          {this.state.list.length > 0 ? (
+            this.state.list.map(({ id, goodMainImg, goodName, getCondition, goodUrl }) => (
+              <div className="col-sm-4 col-md-3" key={id}>
+                <div className="card">
+                  <div
+                    className="card-img mb-10 pointer"
                     onClick={() => {
                       navigate(goodUrl);
                     }}
                   >
-                    {goodName}
-                  </p>
-                  <p className="font-12 mb-10 cart-text p-ellips" title={getCondition}>
-                    {getCondition}
-                  </p>
-                  <div
-                    className="button-collection"
-                    onClick={() => {
-                      this.showModal('modal_transfer', { data: { goodsId: id, goodMainImg, goodName, getCondition, uid: userInfo.id } });
-                    }}
-                  >
-                    领取
+                    <img alt="" src={goodMainImg} className="width-100" />
+                  </div>
+                  <div className="plr-20">
+                    <p
+                      className="font-14 cart-text p-ellips pointer"
+                      title={goodName}
+                      onClick={() => {
+                        navigate(goodUrl);
+                      }}
+                    >
+                      {goodName}
+                    </p>
+                    <p className="font-12 mb-10 cart-text p-ellips" title={getCondition}>
+                      {getCondition}
+                    </p>
+                    {loginStatus ? (
+                      <div
+                        className="button-collection"
+                        onClick={() => {
+                          this.showModal('modal_transfer', { data: { goodsId: id, goodMainImg, goodName, getCondition, uid: userInfo.id } });
+                        }}
+                      >
+                        领取
+                      </div>
+                    ) : (
+                      <div
+                        className="button-collection"
+                        onClick={() => {
+                          this.showModal('modal_login');
+                        }}
+                      >
+                        登录后领取
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-30" />
-        <div className="block-center">
-          {pageTotal <= 0 ? (
-            <p>暂无商品</p>
+            ))
           ) : (
-            <Paginate
-              previousLabel={<img src={left} alt="" />}
-              nextLabel={<img src={left} alt="" className={'right'} />}
-              breakLabel={<img src={src1} alt="" />}
-              pageCount={pageTotal}
-              marginPagesDisplayed={5}
-              pageRangeDisplayed={5}
-              onPageChange={this.handlePageChange}
-              containerClassName={'pagination'}
-              nextClassName={'next-page'}
-              previousClassName={'previous-page'}
-              pageLinkClassName={'pageLinkClassName'}
-              activeClassName={'active'}
-              pageClassName={'page'}
-              breakClassName={'break-me'}
-            />
+            <div style={{ marginTop: '100px' }}>
+              <i className="iconfont icon-zanwushuju color-fff" style={{ fontSize: '100px' }} />
+              <p style={{ color: '#545454' }}>暂无数据</p>
+            </div>
           )}
         </div>
+
+        {this.state.list.length > 0 && this.state.pageBottom ? (
+          <div>
+            <i className="iconfont icon-meiyouneirong" />
+            <div className="space-10" />
+            <p className="color-54 font-14">最后一页</p>
+          </div>
+        ) : null}
+
         <div className="space-30" />
         <Modal
           show={modal_login.show}
@@ -356,6 +409,7 @@ class App extends Component {
           }}
         >
           <Register
+            show={modal_register.show}
             ref="register"
             onCancel={() => {
               this.closeModal('modal_register');

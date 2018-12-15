@@ -12,7 +12,15 @@ class Register extends Component {
       second: '验证',
       success: false
     };
-    this.authTimer = {};
+    this.authTimer = null;
+  }
+
+  componentWillReceiveProps(props) {
+    console.log('update');
+    if (props.show) {
+      console.log('show');
+      this.clear();
+    }
   }
 
   handleInputChange = (key, value) => {
@@ -48,20 +56,27 @@ class Register extends Component {
   };
 
   clear = () => {
+    this.authTimer = null;
     this.setState({ account: '', password: '', error: '', auth: '', success: false, step: 1 });
   };
 
   countDown = () => {
-    this.authTimer = setInterval(() => {
-      if (this.state.second === '验证') {
-        this.setState({ second: 59 });
-      } else if (this.state.second === 0) {
-        clearInterval(this.authTimer);
-        this.setState({ second: '验证' });
-      } else {
-        this.setState({ second: this.state.second - 1 });
-      }
-    }, 1000);
+    if (!this.authTimer) {
+      this.authTimer = setInterval(() => {
+        if (this.state.second === '验证') {
+          this.setState({ second: 59 });
+        } else if (this.state.second === 0) {
+          clearInterval(this.authTimer);
+          this.authTimer = null;
+          this.setState({ second: '验证' });
+        } else {
+          this.setState({ second: this.state.second - 1 });
+        }
+      }, 1000);
+    }
+  };
+  success = () => {
+    this.setState({ success: true, error: '' });
   };
   // 验证
   validate = () => {
@@ -93,11 +108,8 @@ class Register extends Component {
       return;
     }
 
-    this.setState({ error: '', success: true });
-    setTimeout(() => {
-      const { auth, account, password } = this.state;
-      this.props.register(account, password, auth);
-    }, 2000);
+    const { auth, account, password } = this.state;
+    this.props.register(account, password, auth);
   };
 
   render() {

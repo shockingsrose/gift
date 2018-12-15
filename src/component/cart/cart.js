@@ -2,16 +2,6 @@ import React, { Component } from 'react';
 import showTime from '../../utils/showTIme';
 import './style.css';
 import apiOrder from '../../api/order';
-import userSrc from './userCenter.png';
-import arrowRight from './arrow-right.png';
-
-const data = [
-  { orderNumber: '123456', productTitle: '商品名称商品名称商品名称商品名称商品名称商品名称', endTime: '2018-12-12' },
-  { orderNumber: '123457', productTitle: '商品名称商品名称商品名称商品名称商品名称商品名称', endTime: '2018-12-12 11:12:21' },
-  { orderNumber: '213123123143', productTitle: '商品名称商品名称商品名称商品名称商品名称商品名称', endTime: '2018-11-12' },
-  { orderNumber: '213123123153', productTitle: '商品名称商品名称商品名称商品名称商品名称商品名称', endTime: '2018-11-12' }
-];
-
 
 class Cart extends Component {
   constructor() {
@@ -19,7 +9,7 @@ class Cart extends Component {
     this.state = {
       list: [],
       // 1代表未过期 0代表过期
-      status: 1,
+      status: 1
     };
   }
 
@@ -28,23 +18,25 @@ class Cart extends Component {
   }
 
   componentWillReceiveProps(props) {
-    
-    if(props.show) {
+    if (props.show) {
       this.getList(1);
     }
   }
 
+  preventBodyScroll() {
+    const cartEle = document.querySelector('#cart');
+    cartEle.addEventListener(() => {});
+  }
 
   getList = (status) => {
-    if( !this.props.loginStatus ) {
-       return;
+    if (!this.props.loginStatus) {
+      return;
     }
     const statusList = status === 0 ? [4, 5] : [1, 2, 3];
-    
-    apiOrder.list({ statusList })
-      .then(( list = [] ) => {        
-        this.setState({ list, status });
-      })
+
+    apiOrder.list({ statusList }).then((list = []) => {
+      this.setState({ list, status });
+    });
   };
 
   render() {
@@ -53,16 +45,17 @@ class Cart extends Component {
     const { show, handleClose, showModal } = this.props;
 
     return (
-      <div className={`${show ? 'move-left' : 'move-right'} cart-wrap`}>
+      <div className={`${show ? 'move-left' : 'move-right'} cart-wrap`} id="cart">
         <div className="cart-header">
           <div className="row">
             <div className="col-sm-6">
-              <img src={userSrc} alt="" className="mr-10 middle" />
+              {/* <img src={userSrc} alt="" className="mr-10 middle" /> */}
               <span className="weight-500 middle">个人中心</span>
             </div>
             <div className="col-sm-6">
               <div className="text-right">
-                <img src={arrowRight} alt="" className="middle pointer" width="20" onClick={handleClose} />
+                {/* <img src={arrowRight} alt="" className="middle pointer" width="20" onClick={handleClose} /> */}
+                <i className="iconfont icon-xiangyou pointer" onClick={handleClose} />
               </div>
             </div>
           </div>
@@ -87,15 +80,22 @@ class Cart extends Component {
           </span>
         </div>
         <div className="cart-content">
-          {list.length > 0 ? list.map((item) => (
-            <Product
-              {...item}
-              key={item.orderNo}
-              showTransferModal={() => {
-                showModal(item);
-              }}
-            />
-          )) : '暂无订单'}
+          {list.length > 0 ? (
+            list.map((item) => (
+              <Product
+                {...item}
+                key={item.orderNo}
+                showTransferModal={() => {
+                  showModal(item);
+                }}
+              />
+            ))
+          ) : (
+            <div style={{ marginTop: '30px' }}>
+              <i className="iconfont icon-zanwushuju color-54" style={{ fontSize: '50px' }} />
+              <p style={{ color: '#545454' }}>暂无订单</p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -133,27 +133,28 @@ class Product extends Component {
     const { time } = this.state;
 
     let renderOperate = '';
-    switch(status) {
+    switch (status) {
       case 1:
-        renderOperate =  <div className="product-time">未确定</div>;
-      break;
+        renderOperate = <div className="product-time">未确定</div>;
+        break;
       case 2:
       case 3:
-        renderOperate =  <div className="product-time">{time}</div>;
-      break;
+        renderOperate = <div className="product-time">{time}</div>;
+        break;
       case 4:
       case 5:
-        renderOperate = 
-        <div>
-          <div className="product-outTime mr-20">剩余0天</div>
-          {/* <div className="product-refund pointer" onClick={showTransferModal}>
+        renderOperate = (
+          <div>
+            <div className="product-outTime mr-20">剩余0天</div>
+            {/* <div className="product-refund pointer" onClick={showTransferModal}>
             申请退款
           </div> */}
-        </div>
-        break; 
+          </div>
+        );
+        break;
       default:
-        renderOperate =  <div className="product-time">未确定</div>;
-        break;  
+        renderOperate = <div className="product-time">未确定</div>;
+        break;
     }
 
     return (
@@ -164,11 +165,11 @@ class Product extends Component {
           </div>
           <div className="product-content-pos">
             <div className="product-content-wrap">
-              <p className="color-999 p-ellips" title={orderNo}>订单编号: {orderNo}</p>
+              <p className="color-999 p-ellips" title={orderNo}>
+                订单编号: {orderNo}
+              </p>
               <p>{goodName}</p>
-              <div className="product-content-operate">
-                {renderOperate}
-              </div>
+              <div className="product-content-operate">{renderOperate}</div>
             </div>
           </div>
         </div>
