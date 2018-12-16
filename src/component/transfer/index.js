@@ -9,7 +9,8 @@ class TransferModal extends Component {
     super();
     this.state = {
       payCode: '',
-      error: ''
+      error: '',
+      success: false,
     };
   }
 
@@ -27,8 +28,11 @@ class TransferModal extends Component {
     apiOrder
       .add(reqData)
       .then(() => {
-        this.props.handleClose();
-        this.setState({ payCode: '', error: '' });
+        this.setState({success: true});
+        setTimeout(() => {
+          this.props.handleClose();
+          this.setState({ payCode: '', error: '', success: false });
+        }, 500);
       })
       .catch(() => {
         this.setState({ error: '请输入正确的支付代码' });
@@ -37,7 +41,7 @@ class TransferModal extends Component {
 
   render() {
     const { show, handleClose, data } = this.props;
-    const { payCode, error } = this.state;
+    const { payCode, error, success } = this.state;
     const { inputChange, submit } = this;
     const { goodName, goodMainImg, getCondition } = data;
     return (
@@ -79,6 +83,12 @@ class TransferModal extends Component {
                 {error}
               </p>
             )}
+            {
+              success ?  
+              <p className="text-success text-left block-center mb-20" style={{ width: '240px' }}>         
+                  支付成功
+              </p> : null
+            }
           </div>
           <div className="button-submit" onClick={submit}>
             提交
